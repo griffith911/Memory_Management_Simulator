@@ -177,6 +177,18 @@ struct Memory {
 			temp = temp->next;
 		}
 	}
+	void clear_memory () {
+		Block* temp = head;
+		while (temp) {
+			Block* next = temp->next;
+			delete temp;
+			temp = next;
+		}
+		head = new Block();
+		head->size = TOTAL_MEMORY;
+		id_counter = 0;
+		cout << "All Block have been freed." << endl;
+	}
 	void memory_stats () {
 		Block* temp = head;
 		int largest_free = 0;
