@@ -32,7 +32,7 @@ struct cache_lvl {
 		set_bits = (int)ceil(log2(sets));
 		offset_bits = (int)ceil(log2(block_size));
 	}
-	void cache_insert (int phy_address) {
+	int cache_insert (int phy_address) {
 		int offset = phy_address & ((1 << offset_bits) - 1);
 		int set_index = (phy_address >> offset_bits) & ((1 << set_bits) - 1);
 		int tag = phy_address >> (offset_bits + set_bits);
@@ -47,14 +47,16 @@ struct cache_lvl {
 				break;
 			}
 		}
+		int evicted_addr = -1;
 		if (!found) {
 			if (row->size() == associativity) {
 				int evicted = row->back().tag;
-				
 				row->pop_back();
+				evicted_addr = (evicted << (set_bits + offset_bits)) | (set_index << offset_bits);
 			}
 			row->push_front(cacheline(tag, 0));
 		}
+		return evicted_addr;
 	}
 	bool cache_read (int phy_address) {
 		int offset = phy_address & ((1 << offset_bits) - 1);
@@ -92,5 +94,13 @@ struct cache_lvl {
 		float hit_ratio = 0.0;
 		if ((hits + miss) != 0) hit_ratio = 100 * float(hits) / (hits + miss);
 		cout << "Cache hit percentage is " << hit_ratio << endl;
+	}
+	void clear_cache () {
+		for (auto &set_i : cache) {
+			set_i.clear();
+		}
+		hits = 0;
+		miss = 0;
+		cout << "Cache Level " << level_id << " has been reset." << endl;
 	}
 };
