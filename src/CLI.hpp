@@ -52,7 +52,7 @@ vector<string> split (string s) {
 void run () {
 	Memory* M1 = NULL;
 	virtual_memory* MMU = NULL;
-	for (int i = 0; i < 10000; i++) {
+	for (int i = 0; i < 100000; i++) {
 		string s;
 		getline(cin, s);
 		vector<string> cmd = split(s);
@@ -178,3 +178,4 @@ void run () {
 		}
 	}
 }
+
