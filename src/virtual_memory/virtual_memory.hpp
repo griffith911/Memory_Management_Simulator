@@ -124,13 +124,16 @@ struct virtual_memory {
 
 		if (!fault && level1 != NULL) {
 			if (level1->cache_read(phy_address)) {
-				cout << "Found in Cache level 1 " << address << endl;
+				cout << "Found in Cache level 1 " << endl;
 				return;
 			}
 			if (level2 != NULL) {
 				if (level2->cache_read(phy_address)) {
+					int evicted_from_l2 = level2->cache_insert(phy_address);
+					if (evicted_from_l2 != -1)
+						level1->cache_flush(evicted_from_l2);
 					lvl1_to_2++;
-					cout << "Found in Cache level 2 " << address << endl;
+					cout << "Found in Cache level 2 " << endl;
 					level1->cache_insert(phy_address);
 					return;
 				}
@@ -164,6 +167,8 @@ struct virtual_memory {
 			cout << "Miss propagation from level 1 to level 2: " << lvl1_to_2 << endl;
 		}
 		cout << "Cache to RAM miss propagation: " << cache_to_ram << endl;
+		cout << page_hits << " Page hits occurred." << endl;
+		cout << page_faults << " Page Faluts occurred." << endl;
 		cout << "Page hit ratio is " << hit_ratio(page_hits,page_faults) << "%" << endl;
 	}
 	void used_frames () {
@@ -201,5 +206,26 @@ struct virtual_memory {
 		cout << "Cache level 2 is filled upto ";
 		cout << res;
 		cout << " out of " << level2->cache_size / level2->block_size << endl;
+	}
+	void clear_ram() {
+		for (int i = 0; i < pages; i++) {
+			PageTable[i].in_ram = 0;
+			PageTable[i].frame_number = -1;
+		}
+		for(int i = 0; i < frames; i++) {
+			RAM[i].occupied = 0;
+			RAM[i].page_id = -1;
+		}
+		LRU.clear();
+		empty_frames.clear();
+		for (int i = 0; i < frames; i++)
+			empty_frames.push_front(i);
+		page_hits = 0;
+		page_faults = 0;
+		lvl1_to_2 = 0;
+		cache_to_ram = 0;
+		if (level1 != NULL) level1->clear_cache();
+		if (level2 != NULL) level2->clear_cache();
+		cout << "RAM, Page Table and Caches have been reset." << endl;
 	}
 };
